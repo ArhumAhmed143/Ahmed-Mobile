@@ -1,0 +1,252 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap');
+@import "tailwindcss";
+
+@theme {
+  --color-amber-50: #0d0d0f;
+  --color-amber-100: #16161a;
+  --color-amber-200: #d4af37;
+  --color-amber-300: #c4b5fd;
+  --color-amber-400: #a78bfa;
+  --color-amber-500: #a78bfa;
+  --color-amber-600: #7c3aed;
+  --color-amber-700: #6d28d9;
+  --color-amber-800: #5b21b6;
+  --color-amber-900: #4c1d95;
+  --color-amber-950: #2e1065;
+  --color-violet-400: #c4b5fd;
+  --color-violet-500: #a78bfa;
+  --color-violet-600: #7c3aed;
+  --color-violet-700: #6d28d9;
+  --color-slate-50: #f5f5f7;
+  --color-slate-100: #f5f5f7;
+  --color-slate-200: #f5f5f7;
+  --color-slate-300: #a1a1a6;
+  --color-slate-400: #a1a1a6;
+  --color-slate-500: #6e6e73;
+  --color-slate-600: #6e6e73;
+  --color-slate-700: #3a3a3e;
+  --color-slate-800: #16161a;
+  --color-slate-900: #16161a;
+  --color-slate-950: #0d0d0f;
+}
+
+:root {
+  color-scheme: dark;
+  --page: #0d0d0f;
+  --surface: #16161a;
+  --tertiary: #222228;
+  --ink: #f5f5f7;
+  --muted: #a1a1a6;
+  --line: rgba(255, 255, 255, 0.08);
+}
+
+@layer base {
+  html { 
+    background: var(--page); 
+    color-scheme: dark;
+  }
+  body {
+    background-color: var(--page);
+    color: var(--ink);
+    font-family: 'Inter', 'Segoe UI', sans-serif;
+    overflow-x: hidden;
+  }
+  h1, h2, h3 {
+    color: #f5f5f7;
+    font-family: 'Inter', 'Segoe UI', sans-serif;
+    font-weight: 600 !important;
+    letter-spacing: -0.02em;
+  }
+  button, a { -webkit-tap-highlight-color: transparent; }
+  *::selection { background: #a78bfa; color: #0d0d0f; }
+
+  /* ============================================================
+     FIX: DARK SELECT DROPDOWN (Category field & all selects)
+     ============================================================ */
+  select {
+    background-color: #16161a !important;
+    color: #f5f5f7 !important;
+    border: 1px solid rgba(167, 139, 250, 0.3);
+    border-radius: 0.75rem;
+    padding: 0.625rem 2.5rem 0.625rem 1rem;
+    width: 100%;
+    appearance: none;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23a78bfa' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'/%3e%3c/svg%3e");
+    background-repeat: no-repeat;
+    background-position: right 0.75rem center;
+    background-size: 1.1rem;
+    cursor: pointer;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+    color-scheme: dark;
+    font-family: inherit;
+  }
+
+  select:hover {
+    border-color: rgba(167, 139, 250, 0.6);
+  }
+
+  select:focus,
+  select:focus-visible {
+    outline: none !important;
+    border-color: #a78bfa !important;
+    box-shadow: 0 0 0 3px rgba(167, 139, 250, 0.2);
+  }
+
+  /* Dropdown options — background & text */
+  select option {
+    background-color: #16161a !important;
+    color: #f5f5f7 !important;
+    padding: 10px;
+    font-size: 0.75rem;
+  }
+
+  select option:hover,
+  select option:focus,
+  select option:checked {
+    background-color: #7c3aed !important;
+    color: #ffffff !important;
+  }
+
+  /* Firefox specific */
+  select:-moz-focusring {
+    color: transparent;
+    text-shadow: 0 0 0 #f5f5f7;
+  }
+
+  /* Chrome/Edge autofill fix */
+  input:-webkit-autofill,
+  input:-webkit-autofill:hover,
+  input:-webkit-autofill:focus,
+  select:-webkit-autofill,
+  textarea:-webkit-autofill {
+    -webkit-text-fill-color: #f5f5f7 !important;
+    -webkit-box-shadow: 0 0 0 1000px #16161a inset !important;
+    transition: background-color 5000s ease-in-out 0s;
+    caret-color: #f5f5f7;
+  }
+
+  /* Fix for date/number inputs in dark mode */
+  input[type="date"]::-webkit-calendar-picker-indicator,
+  input[type="time"]::-webkit-calendar-picker-indicator,
+  input[type="datetime-local"]::-webkit-calendar-picker-indicator {
+    filter: invert(0.7) sepia(1) saturate(5) hue-rotate(230deg);
+    cursor: pointer;
+  }
+  /* ============================================================
+     END FIX
+     ============================================================ */
+}
+
+.gold-gradient-text {
+  background: none;
+  color: #f5f5f7;
+  -webkit-text-fill-color: #f5f5f7;
+}
+.gold-gradient-bg { background: #a78bfa; }
+.gold-gradient-bg.text-black { color: #0d0d0f !important; }
+.gold-border-glow {
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow: none;
+  transition: border-color 0.3s ease, box-shadow 0.3s ease;
+}
+.gold-border-glow:hover {
+  border-color: rgba(167, 139, 250, 0.3);
+  box-shadow: 0 8px 22px rgba(0, 0, 0, 0.18);
+}
+.glass-card {
+  background: #16161a;
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+[class*="bg-[#08080A]"], [class*="bg-[#060608]"], [class*="bg-[#0C0C10]"],
+[class*="bg-[#101014]"], [class*="bg-[#1a1a1c]"], [class*="bg-[#f1f5f9]"],
+[class*="bg-[#f5f1eb]"], [class*="bg-[#121212]"], [class*="bg-[#0a0a14]"],
+[class*="bg-[#12121e]"], [class*="bg-[#fafafa]"] {
+  background-color: var(--page) !important;
+}
+[class*="bg-[#0C0C10]"], [class*="bg-[#232326]"] {
+  background-color: var(--surface) !important;
+}
+[class*="bg-black"] { background-color: var(--page) !important; }
+
+/* Dedicated high-visibility CTA buttons */
+.btn-white-cta {
+  background: #ffffff !important;
+  color: #09090b !important;
+  font-weight: 900 !important;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  border-radius: 0.75rem;
+  padding: 0.875rem 2rem;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.35), 0 0 0 1px rgba(255, 255, 255, 0.6);
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  cursor: pointer;
+  text-decoration: none !important;
+  user-select: none;
+}
+.btn-white-cta:hover {
+  background: #f4f4f5 !important;
+  color: #000000 !important;
+  transform: translateY(-2px) scale(1.02);
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.5), 0 0 0 2px #ffffff;
+}
+.btn-white-cta:active {
+  transform: translateY(0) scale(0.98);
+}
+.btn-white-cta, .btn-white-cta *, .btn-white-cta span, .btn-white-cta svg {
+  color: #09090b !important;
+}
+
+.btn-purple-cta {
+  background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 50%, #6d28d9 100%) !important;
+  color: #ffffff !important;
+  font-weight: 800 !important;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  border-radius: 0.75rem;
+  padding: 0.875rem 2rem;
+  border: 1px solid rgba(255, 255, 255, 0.3) !important;
+  box-shadow: 0 4px 20px rgba(124, 58, 237, 0.45), inset 0 1px 1px rgba(255, 255, 255, 0.3);
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  cursor: pointer;
+  text-decoration: none !important;
+  user-select: none;
+}
+.btn-purple-cta:hover {
+  background: linear-gradient(135deg, #9333ea 0%, #8b5cf6 50%, #7c3aed 100%) !important;
+  transform: translateY(-2px) scale(1.02);
+  box-shadow: 0 8px 30px rgba(124, 58, 237, 0.65), inset 0 1px 1px rgba(255, 255, 255, 0.5);
+  color: #ffffff !important;
+}
+.btn-purple-cta:active {
+  transform: translateY(0) scale(0.98);
+}
+.btn-purple-cta, .btn-purple-cta *, .btn-purple-cta span, .btn-purple-cta svg {
+  color: #ffffff !important;
+}
+[class*="text-[#D4AF37]"], [class*="text-[#B8860B]"], [class*="text-[#F5D77F]"] { color: #a78bfa !important; }
+[class*="fill-[#D4AF37]"], [class*="fill-[#F5D77F]"] { fill: #a78bfa !important; }
+[class*="border-[#D4AF37]"] { border-color: rgba(167, 139, 250, 0.3) !important; }
+[class*="bg-[#D4AF37]/10"], [class*="bg-[#B8860B]/10"] { background-color: rgba(167, 139, 250, 0.1) !important; }
+[class*="accent-[#D4AF37]"] { accent-color: #a78bfa !important; }
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    scroll-behavior: auto !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
