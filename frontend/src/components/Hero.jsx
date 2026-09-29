@@ -120,7 +120,7 @@ export default function Hero() {
                 FEATURED HIGHLIGHT
               </span>
               <span className="mt-3 block text-2xl font-black font-mono text-white">
-                {formatCurrency(featuredProduct?.price || 1500)}
+                {featuredProduct ? formatCurrency(featuredProduct.price) : 'Loading...'}
               </span>
             </div>
 
