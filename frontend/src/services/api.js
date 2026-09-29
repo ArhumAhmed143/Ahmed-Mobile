@@ -208,6 +208,25 @@ export const api = {
   updateInventoryStock: async (productId, stockQuantity) => {
     const response = await apiClient.put(`/admin/inventory/${productId}`, { stock_quantity: stockQuantity });
     return response.data;
+  },
+
+  // ============================================================
+  // 🔔 Payment Verification (Admin — Manual JazzCash/EasyPaisa)
+  // ============================================================
+  adminVerifyPayment: async (orderId, transactionId = '') => {
+    const response = await apiClient.put(`/payments/admin/${orderId}/verify`, {
+      order_id: orderId,
+      transaction_id: transactionId
+    });
+    return response.data;
+  },
+
+  adminRejectPayment: async (orderId, reason = '') => {
+    const response = await apiClient.put(`/payments/admin/${orderId}/reject`, {
+      order_id: orderId,
+      reason
+    });
+    return response.data;
   }
 };
 

@@ -2,7 +2,11 @@ const mongoose = require('mongoose');
 const { Order } = require('../models');
 const { processPaymentCreation, verifyGatewaySignature } = require('../services/payment/paymentService');
 const { sendPaymentStatusEmail } = require('../services/email/brevoService');
+const { logAdminAction } = require('../services/auditService');
 
+// ============================================================
+// Customer: Create Payment Session
+// ============================================================
 async function createPayment(req, res) {
   const { order_id, payment_method = 'nayapay' } = req.body;
   if (!order_id) return res.status(400).json({ success: false, message: 'Order ID is required.' });
@@ -47,6 +51,9 @@ async function createPayment(req, res) {
   }
 }
 
+// ============================================================
+// Customer: Verify Payment Status (Auto Gateway)
+// ============================================================
 async function verifyPayment(req, res) {
   const { order_id } = req.body;
   if (!order_id) return res.status(400).json({ success: false, message: 'Order ID is required.' });
@@ -77,6 +84,9 @@ async function verifyPayment(req, res) {
   }
 }
 
+// ============================================================
+// Gateway Webhook (Auto NayaPay/Stripe)
+// ============================================================
 async function handleWebhook(req, res) {
   const signature = req.headers['x-payment-signature'] || req.headers.signature;
   const { transaction_id, order_id, status, amount } = req.body;
@@ -115,6 +125,9 @@ async function handleWebhook(req, res) {
   }
 }
 
+// ============================================================
+// Customer: Get Payment Status
+// ============================================================
 async function getPaymentStatus(req, res) {
   const { orderId } = req.params;
   if (!mongoose.isValidObjectId(orderId)) {
@@ -141,4 +154,129 @@ async function getPaymentStatus(req, res) {
   }
 }
 
-module.exports = { createPayment, verifyPayment, handleWebhook, getPaymentStatus };
+// ============================================================
+// 🔔 AUTOMATION: Admin Manually Verify Payment
+// (JazzCash / EasyPaisa manual transfers ke liye)
+// ============================================================
+async function adminVerifyPayment(req, res) {
+  const { order_id, transaction_id, note } = req.body;
+  const adminId = req.admin?.adminId || 'system';
+
+  if (!order_id) return res.status(400).json({ success: false, message: 'Order ID is required.' });
+  if (!mongoose.isValidObjectId(order_id)) return res.status(404).json({ success: false, message: 'Order not found.' });
+
+  try {
+    const order = await Order.findById(order_id);
+    if (!order) return res.status(404).json({ success: false, message: 'Order not found.' });
+
+    // Already paid check
+    if (order.payment_status === 'paid') {
+      return res.status(400).json({ success: false, message: 'This order payment is already marked as paid.' });
+    }
+
+    const previousPaymentStatus = order.payment_status || 'pending';
+
+    // Update order payment status
+    order.payment_status = 'paid';
+    if (order.payments.length > 0) {
+      const latestPayment = order.payments[order.payments.length - 1];
+      latestPayment.status = 'paid';
+      if (transaction_id) latestPayment.transaction_id = transaction_id;
+    } else {
+      // No payment record — create one
+      order.payments.push({
+        payment_method: order.payment_method || 'manual',
+        transaction_id: transaction_id || `MANUAL-${Date.now()}`,
+        amount: Number(order.total_amount),
+        status: 'paid',
+        provider: 'manual',
+        provider_reference: note || 'Admin manual verification'
+      });
+    }
+
+    await order.save();
+
+    // 🔔 AUTOMATION: Send Payment Confirmation Email to Customer
+    sendPaymentStatusEmail(order, 'paid').catch((error) => {
+      console.warn('Payment confirmation email failed:', error.message);
+    });
+
+    // Log admin action
+    await logAdminAction({
+      adminId,
+      action: 'payment_manually_verified',
+      entityType: 'order',
+      entityId: order_id,
+      details: `Payment status changed from ${previousPaymentStatus} to paid. Transaction: ${transaction_id || 'N/A'}`
+    });
+
+    return res.status(200).json({
+      success: true,
+      message: 'Payment verified successfully. Confirmation email sent to customer.',
+      data: {
+        order_id: order.id,
+        payment_status: 'paid',
+        total_amount: Number(order.total_amount)
+      }
+    });
+  } catch (error) {
+    console.error('Admin verify payment error:', error.message);
+    return res.status(500).json({ success: false, message: 'Failed to verify payment.' });
+  }
+}
+
+// ============================================================
+// 🔔 AUTOMATION: Admin Mark Payment as Failed
+// ============================================================
+async function adminRejectPayment(req, res) {
+  const { order_id, reason } = req.body;
+  const adminId = req.admin?.adminId || 'system';
+
+  if (!order_id) return res.status(400).json({ success: false, message: 'Order ID is required.' });
+  if (!mongoose.isValidObjectId(order_id)) return res.status(404).json({ success: false, message: 'Order not found.' });
+
+  try {
+    const order = await Order.findById(order_id);
+    if (!order) return res.status(404).json({ success: false, message: 'Order not found.' });
+
+    if (order.payment_status === 'paid') {
+      return res.status(400).json({ success: false, message: 'Paid orders cannot be rejected.' });
+    }
+
+    order.payment_status = 'failed';
+    if (order.payments.length > 0) {
+      const latestPayment = order.payments[order.payments.length - 1];
+      latestPayment.status = 'failed';
+    }
+    await order.save();
+
+    // Send failure email to customer
+    sendPaymentStatusEmail(order, 'failed').catch((error) => {
+      console.warn('Payment failure email failed:', error.message);
+    });
+
+    await logAdminAction({
+      adminId,
+      action: 'payment_rejected',
+      entityType: 'order',
+      entityId: order_id,
+      details: `Payment marked as failed. Reason: ${reason || 'Not specified'}`
+    });
+
+    return res.status(200).json({
+      success: true,
+      message: 'Payment marked as failed. Notification email sent to customer.'
+    });
+  } catch (error) {
+    return res.status(500).json({ success: false, message: 'Failed to update payment status.' });
+  }
+}
+
+module.exports = {
+  createPayment,
+  verifyPayment,
+  handleWebhook,
+  getPaymentStatus,
+  adminVerifyPayment,
+  adminRejectPayment
+};
