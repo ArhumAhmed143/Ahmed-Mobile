@@ -19,6 +19,13 @@ const newsletterRoutes = require('./src/routes/newsletterRoutes');
 const app = express();
 const PORT = process.env.PORT || 5000;
 
+// ============================================================
+// ✅ FIX: Trust Render's proxy for express-rate-limit
+// Yeh line Render/Heroku/Vercel jaise platforms ke liye zaroori hai
+// warna rate limiter galat IP detect karta hai aur warning deta hai
+// ============================================================
+app.set('trust proxy', 1);
+
 // Security HTTP Headers Middleware (Helmet)
 app.use(helmet({
   crossOriginResourcePolicy: { policy: "cross-origin" } // Allows static product image access
