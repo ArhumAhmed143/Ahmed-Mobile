@@ -9,8 +9,8 @@ const {
   adminRejectPayment
 } = require('../controllers/paymentController');
 
-// ⚠️ IMPORTANT: Apne project ke admin auth middleware ka naam yahan daalo
-const { protectAdmin } = require('../middleware/authMiddleware');
+// ✅ FIX: Aapke project mein middleware ka naam 'verifyAdminToken' hai
+const { verifyAdminToken } = require('../middleware/authMiddleware');
 
 // ============================================================
 // Public Payment Endpoints (Customer)
@@ -23,7 +23,7 @@ router.get('/status/:orderId', getPaymentStatus);
 // ============================================================
 // 🔔 Admin Payment Verification Endpoints (Manual JazzCash/EasyPaisa)
 // ============================================================
-router.put('/admin/:orderId/verify', protectAdmin, adminVerifyPayment);
-router.put('/admin/:orderId/reject', protectAdmin, adminRejectPayment);
+router.put('/admin/:orderId/verify', verifyAdminToken, adminVerifyPayment);
+router.put('/admin/:orderId/reject', verifyAdminToken, adminRejectPayment);
 
 module.exports = router;
