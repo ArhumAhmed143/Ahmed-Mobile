@@ -11,10 +11,10 @@ export default function Hero() {
   const [featuredProduct, setFeaturedProduct] = useState(null);
 
   useEffect(() => {
-    api.getProductById(1)
+    api.getFeaturedProducts()
       .then(res => {
         if (res.success && res.data) {
-          setFeaturedProduct(res.data);
+          setFeaturedProduct(res.data[0])
         }
       })
       .catch(err => console.warn('Hero featured product fetch error:', err));
