@@ -157,11 +157,98 @@ async function sendOrderStatusEmail(order, orderStatus) {
   });
 }
 
+// ============================================================
+// 🔔 AUTOMATION: Low Stock Alert Email (Admin ke liye)
+// ============================================================
+async function sendLowStockAlertEmail(product) {
+  if (!isBrevoConfigured()) return;
+
+  const adminEmail = process.env.BREVO_ADMIN_EMAIL || process.env.BREVO_SENDER_EMAIL;
+  if (!adminEmail) {
+    console.warn('Low stock alert skipped: No admin email configured.');
+    return;
+  }
+
+  const productName = escapeHtml(product.name || 'Unknown Product');
+  const productSku = escapeHtml(product.sku || 'N/A');
+  const currentStock = Number(product.stock_quantity) || 0;
+  const threshold = 5;
+
+  // Color based on stock level
+  const stockColor = currentStock === 0 ? '#dc2626' : currentStock <= 2 ? '#f59e0b' : '#eab308';
+  const urgencyLabel = currentStock === 0 ? '🚨 OUT OF STOCK' : currentStock <= 2 ? '⚠️ CRITICAL' : '⚡ LOW STOCK';
+
+  const htmlContent = emailShell('Low Stock Alert', `
+    <p style="font-size:16px;font-weight:bold;color:${stockColor};margin:0 0 16px">
+      ${urgencyLabel}
+    </p>
+    <p>One of your products is running low on stock and needs your attention:</p>
+    
+    <table role="presentation" style="width:100%;border-collapse:collapse;margin:24px 0;background:#f8fafc;border-radius:8px">
+      <tbody>
+        <tr>
+          <td style="padding:12px 16px;color:#64748b;font-size:13px">Product Name</td>
+          <td style="padding:12px 16px;font-weight:bold;text-align:right">${productName}</td>
+        </tr>
+        <tr>
+          <td style="padding:12px 16px;color:#64748b;font-size:13px;border-top:1px solid #e5e7eb">SKU</td>
+          <td style="padding:12px 16px;text-align:right;font-family:monospace;border-top:1px solid #e5e7eb">${productSku}</td>
+        </tr>
+        <tr>
+          <td style="padding:12px 16px;color:#64748b;font-size:13px;border-top:1px solid #e5e7eb">Current Stock</td>
+          <td style="padding:12px 16px;text-align:right;font-weight:bold;font-size:18px;color:${stockColor};border-top:1px solid #e5e7eb">${currentStock} units</td>
+        </tr>
+        <tr>
+          <td style="padding:12px 16px;color:#64748b;font-size:13px;border-top:1px solid #e5e7eb">Alert Threshold</td>
+          <td style="padding:12px 16px;text-align:right;border-top:1px solid #e5e7eb">${threshold} units</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <p style="background:#fef3c7;border-left:4px solid #f59e0b;padding:12px 16px;border-radius:4px;font-size:13px;margin:16px 0">
+      <strong>Action Required:</strong> Please restock this product soon to avoid missing out on sales.
+    </p>
+
+    <p style="text-align:center;margin:24px 0">
+      <a href="${process.env.FRONTEND_URL || 'https://ahmed-mobile.vercel.app'}/admin/inventory" 
+         style="display:inline-block;background:#7c3aed;color:#fff;padding:12px 24px;border-radius:8px;text-decoration:none;font-weight:bold;font-size:14px">
+        Manage Inventory
+      </a>
+    </p>
+  `);
+
+  const textContent = `
+LOW STOCK ALERT ${urgencyLabel}
+
+Product: ${product.name}
+SKU: ${product.sku || 'N/A'}
+Current Stock: ${currentStock} units
+Threshold: ${threshold} units
+
+Please restock soon.
+
+Manage inventory: ${process.env.FRONTEND_URL || 'https://ahmed-mobile.vercel.app'}/admin/inventory
+  `.trim();
+
+  try {
+    await sendTransactionalEmail({
+      to: adminEmail,
+      subject: `${urgencyLabel}: ${product.name} (${currentStock} left)`,
+      htmlContent,
+      textContent
+    });
+    console.log(`✅ Low stock alert sent for "${product.name}" (${currentStock} units)`);
+  } catch (error) {
+    console.warn('❌ Low stock alert email failed:', error.message);
+  }
+}
+
 module.exports = {
   addNewsletterContact,
   isBrevoConfigured,
   sendNewsletterWelcomeEmail,
   sendOrderConfirmation,
   sendOrderStatusEmail,
-  sendPaymentStatusEmail
+  sendPaymentStatusEmail,
+  sendLowStockAlertEmail
 };

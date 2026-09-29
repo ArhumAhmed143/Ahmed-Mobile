@@ -8,7 +8,22 @@ async function createOrder(req, res) {
     customer_name, customer_email, customer_phone, shipping_address,
     city, postal_code, order_notes = '', payment_method = 'cod', items
   } = req.body;
+const automationService = require('../automation/automationService');
 
+// ... order successfully create hone ke baad ...
+
+// Order Confirmation Email bhejo
+const orderConfirmationHtml = `
+    <h2>Thank You for Your Order!</h2>
+    <p>Hi ${order.customer_name},</p>
+    <p>Your order <strong>#${order.order_id}</strong> has been successfully placed.</p>
+    <p>Total Amount: <strong>Rs ${order.total_amount}</strong></p>
+    <p>We will notify you once your order is shipped.</p>
+    <p>Thank you for shopping with Ahmed Mobile!</p>
+`;
+await automationService.sendEmail(order.customer_email, `Order Confirmation #${order.order_id}`, orderConfirmationHtml);
+
+// ... aage ka code ...
   if (!customer_name || !String(customer_name).trim()) return res.status(400).json({ success: false, message: 'Please enter your full name.' });
   if (!customer_email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(customer_email.trim())) return res.status(400).json({ success: false, message: 'Please enter a valid email address.' });
   if (!customer_phone || !String(customer_phone).trim()) return res.status(400).json({ success: false, message: 'Please enter your phone number.' });
