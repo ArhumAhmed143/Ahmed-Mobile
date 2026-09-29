@@ -76,6 +76,16 @@ export const api = {
     return response.data;
   },
 
+  getFeaturedHighlight: async () => {
+    const response = await apiClient.get('/products/featured-highlight');
+    return response.data;
+  },
+
+  toggleFeaturedHighlight: async (id) => {
+    const response = await apiClient.put(`/products/${id}/featured-highlight`);
+    return response.data;
+  },
+
   getNewArrivals: async () => {
     const response = await apiClient.get('/products/new-arrivals');
     return response.data;

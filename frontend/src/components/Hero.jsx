@@ -11,13 +11,22 @@ export default function Hero() {
   const [featuredProduct, setFeaturedProduct] = useState(null);
 
   useEffect(() => {
-    api.getFeaturedProducts()
+    api.getFeaturedHighlight()
       .then(res => {
         if (res.success && res.data) {
-          setFeaturedProduct(res.data[0])
+          setFeaturedProduct(res.data);
         }
       })
-      .catch(err => console.warn('Hero featured product fetch error:', err));
+      .catch(err => {
+        console.warn('Hero featured highlight fetch error:', err);
+        api.getFeaturedProducts()
+          .then(res => {
+            if (res.success && res.data?.[0]) {
+              setFeaturedProduct(res.data[0]);
+            }
+          })
+          .catch(() => {});
+      });
   }, []);
   return (
     <section className="relative overflow-hidden bg-[#0d0d0f] pt-8 pb-14 sm:py-16 md:py-24">

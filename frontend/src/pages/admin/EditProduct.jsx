@@ -25,6 +25,7 @@ export default function EditProduct() {
     short_description: '',
     description: '',
     is_featured: false,
+    is_featured_highlight: false,
     is_new_arrival: false,
     is_best_seller: false
   });
@@ -57,6 +58,7 @@ export default function EditProduct() {
           short_description: prod.short_description || '',
           description: prod.description || '',
           is_featured: Boolean(prod.is_featured),
+          is_featured_highlight: Boolean(prod.is_featured_highlight),
           is_new_arrival: Boolean(prod.is_new_arrival),
           is_best_seller: Boolean(prod.is_best_seller)
         });
@@ -280,6 +282,59 @@ export default function EditProduct() {
             onChange={handleChange}
             className="w-full bg-slate-900 border border-amber-500/30 rounded-xl p-4 text-xs text-slate-100 focus:outline-none focus:border-amber-400"
           />
+        </div>
+
+        {/* Product Badges & Featured Highlight */}
+        <div className="p-4 rounded-2xl bg-slate-900/60 border border-amber-500/20 space-y-3">
+          <span className="block text-xs font-bold text-amber-300 uppercase tracking-wider">Product Highlights & Badges</span>
+          <div className="flex flex-wrap items-center gap-6">
+            <label className="flex items-center gap-2 text-xs font-bold text-violet-300 cursor-pointer bg-violet-950/40 border border-violet-500/30 px-3 py-1.5 rounded-xl hover:border-violet-400 transition-colors">
+              <input
+                type="checkbox"
+                name="is_featured_highlight"
+                checked={formData.is_featured_highlight}
+                onChange={handleChange}
+                className="accent-violet-500 w-4 h-4 cursor-pointer"
+              />
+              <span>★ Homepage Featured Highlight (Max 1)</span>
+            </label>
+
+            <label className="flex items-center gap-2 text-xs font-semibold text-slate-300 cursor-pointer">
+              <input
+                type="checkbox"
+                name="is_featured"
+                checked={formData.is_featured}
+                onChange={handleChange}
+                className="accent-amber-400 w-4 h-4 cursor-pointer"
+              />
+              <span>Featured Product</span>
+            </label>
+
+            <label className="flex items-center gap-2 text-xs font-semibold text-slate-300 cursor-pointer">
+              <input
+                type="checkbox"
+                name="is_new_arrival"
+                checked={formData.is_new_arrival}
+                onChange={handleChange}
+                className="accent-amber-400 w-4 h-4 cursor-pointer"
+              />
+              <span>New Arrival</span>
+            </label>
+
+            <label className="flex items-center gap-2 text-xs font-semibold text-slate-300 cursor-pointer">
+              <input
+                type="checkbox"
+                name="is_best_seller"
+                checked={formData.is_best_seller}
+                onChange={handleChange}
+                className="accent-amber-400 w-4 h-4 cursor-pointer"
+              />
+              <span>Best Seller</span>
+            </label>
+          </div>
+          <p className="text-[11px] text-slate-400">
+            Note: <strong>Homepage Featured Highlight</strong> poore store mein sirf 1 product par set ho sakta hai. Agar aap is product ko chunenge to pehle wala product khud ba khud hat jayega.
+          </p>
         </div>
 
         {/* Existing Images Gallery */}

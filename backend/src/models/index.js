@@ -41,6 +41,7 @@ const productSchema = new Schema({
   category_id: { type: Schema.Types.ObjectId, ref: 'Category', default: null },
   rating: { type: Number, default: 5 },
   is_featured: { type: Number, default: 0 },
+  is_featured_highlight: { type: Number, default: 0 },
   is_new_arrival: { type: Number, default: 0 },
   is_best_seller: { type: Number, default: 0 },
   is_active: { type: Number, default: 1 },

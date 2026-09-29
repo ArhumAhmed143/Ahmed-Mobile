@@ -22,6 +22,7 @@ export default function AddProduct() {
     short_description: '',
     description: '',
     is_featured: false,
+    is_featured_highlight: false,
     is_new_arrival: true,
     is_best_seller: false
   });
@@ -309,6 +310,17 @@ export default function AddProduct() {
 
         {/* Badges */}
         <div className="flex flex-wrap items-center gap-6 pt-2">
+          <label className="flex items-center gap-2 text-xs font-bold text-violet-300 cursor-pointer bg-violet-950/40 border border-violet-500/30 px-3 py-1.5 rounded-xl hover:border-violet-400 transition-colors">
+            <input
+              type="checkbox"
+              name="is_featured_highlight"
+              checked={formData.is_featured_highlight}
+              onChange={handleChange}
+              className="accent-violet-500 w-4 h-4 cursor-pointer"
+            />
+            <span>★ Featured Highlight (Homepage Top Card - Max 1)</span>
+          </label>
+
           <label className="flex items-center gap-2 text-xs font-semibold text-slate-300 cursor-pointer">
             <input
               type="checkbox"

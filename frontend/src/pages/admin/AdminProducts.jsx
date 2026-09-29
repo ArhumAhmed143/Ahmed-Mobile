@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import { api } from '../../services/api';
 import { formatCurrency } from '../../utils/formatCurrency';
-import { PlusCircle, Search, Edit2, Trash2, RefreshCw, Eye, AlertTriangle, X, FileSpreadsheet, Upload, CheckCircle2, AlertCircle, LoaderCircle } from 'lucide-react';
+import { PlusCircle, Search, Edit2, Trash2, RefreshCw, Eye, AlertTriangle, X, FileSpreadsheet, Upload, CheckCircle2, AlertCircle, LoaderCircle, Sparkles } from 'lucide-react';
 import ProductImage from '../../components/ProductImage';
 import { motion, AnimatePresence } from 'framer-motion';
 import readXlsxFile from 'read-excel-file/browser';
@@ -32,6 +32,41 @@ export default function AdminProducts() {
   // Modal Delete State
   const [productToDelete, setProductToDelete] = useState(null);
   const [isDeleting, setIsDeleting] = useState(false);
+
+  // Featured Highlight State
+  const [togglingHighlightId, setTogglingHighlightId] = useState(null);
+  const [highlightToast, setHighlightToast] = useState(null);
+
+  const handleToggleHighlight = async (product) => {
+    setTogglingHighlightId(product.id);
+    try {
+      const res = await api.toggleFeaturedHighlight(product.id);
+      if (res.success) {
+        const isNowHighlight = res.is_featured_highlight === 1;
+        setProducts(prev => prev.map(p => {
+          if (p.id === product.id) {
+            return { ...p, is_featured_highlight: isNowHighlight ? 1 : 0 };
+          }
+          return isNowHighlight ? { ...p, is_featured_highlight: 0 } : p;
+        }));
+
+        setHighlightToast({
+          type: 'success',
+          text: isNowHighlight
+            ? `✨ "${product.name}" is now set as the Homepage Featured Highlight! (Limit: 1 product)`
+            : `"${product.name}" removed from Homepage Featured Highlight.`
+        });
+        setTimeout(() => setHighlightToast(null), 4000);
+      } else {
+        alert(res.message || 'Failed to update highlight.');
+      }
+    } catch (err) {
+      console.error('Highlight toggle error:', err);
+      alert('Error updating featured highlight.');
+    } finally {
+      setTogglingHighlightId(null);
+    }
+  };
 
   const fetchProductsAndCategories = async () => {
     setLoading(true);
@@ -307,6 +342,29 @@ export default function AdminProducts() {
         </div>
       </div>
 
+      {/* Toast Alert for Highlight Changes */}
+      <AnimatePresence>
+        {highlightToast && (
+          <motion.div
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -10 }}
+            className="p-4 rounded-2xl bg-gradient-to-r from-violet-950/90 via-slate-900 to-[#12121e] border border-violet-500/40 text-violet-200 text-xs font-bold flex items-center justify-between shadow-[0_0_25px_rgba(139,92,246,0.25)]"
+          >
+            <div className="flex items-center gap-2.5">
+              <Sparkles className="w-4 h-4 text-violet-300 fill-violet-300" />
+              <span>{highlightToast.text}</span>
+            </div>
+            <button
+              onClick={() => setHighlightToast(null)}
+              className="text-violet-400 hover:text-white p-1 rounded-lg"
+            >
+              <X className="w-4 h-4" />
+            </button>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       {/* Catalog Table */}
       <div className="glass-card gold-border-glow rounded-3xl p-6">
         <div className="overflow-x-auto">
@@ -320,17 +378,18 @@ export default function AdminProducts() {
                 <th className="pb-3 px-3">Price</th>
                 <th className="pb-3 px-3">Stock</th>
                 <th className="pb-3 px-3">Status</th>
+                <th className="pb-3 px-3 text-center">Featured Highlight (1 Max)</th>
                 <th className="pb-3 px-3 text-right">Actions</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-800/60">
               {loading ? (
                 <tr>
-                  <td colSpan="8" className="py-12 text-center text-slate-400">Loading catalog from database...</td>
+                  <td colSpan="9" className="py-12 text-center text-slate-400">Loading catalog from database...</td>
                 </tr>
               ) : filteredProducts.length === 0 ? (
                 <tr>
-                  <td colSpan="8" className="py-12 text-center text-slate-400">No matching products found.</td>
+                  <td colSpan="9" className="py-12 text-center text-slate-400">No matching products found.</td>
                 </tr>
               ) : (
                 filteredProducts.map(prod => {
@@ -357,6 +416,28 @@ export default function AdminProducts() {
                         ) : (
                           <span className="px-2 py-0.5 rounded bg-emerald-950 text-emerald-300 border border-emerald-500/30 text-[10px] font-bold">In Stock</span>
                         )}
+                      </td>
+                      <td className="py-3 px-3 text-center">
+                        <button
+                          type="button"
+                          disabled={togglingHighlightId === prod.id}
+                          onClick={() => handleToggleHighlight(prod)}
+                          title={prod.is_featured_highlight === 1 ? "Active Hero Highlight (Click to remove)" : "Click to make this the 1 Homepage Featured Highlight"}
+                          className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-[11px] font-bold transition-all ${
+                            prod.is_featured_highlight === 1
+                              ? "bg-violet-600/30 text-violet-200 border border-violet-400 shadow-[0_0_15px_rgba(139,92,246,0.35)] ring-1 ring-violet-400"
+                              : "bg-slate-900/80 text-slate-400 border border-slate-800 hover:border-violet-500/50 hover:text-violet-300 hover:bg-slate-800/80"
+                          } disabled:opacity-50`}
+                        >
+                          {togglingHighlightId === prod.id ? (
+                            <LoaderCircle className="w-3.5 h-3.5 animate-spin text-violet-400" />
+                          ) : (
+                            <Sparkles className={`w-3.5 h-3.5 ${prod.is_featured_highlight === 1 ? 'text-violet-300 fill-violet-300' : 'text-slate-500'}`} />
+                          )}
+                          <span>
+                            {prod.is_featured_highlight === 1 ? "★ Highlight Active" : "Set Highlight"}
+                          </span>
+                        </button>
                       </td>
                       <td className="py-3 px-3 text-right">
                         <div className="flex items-center justify-end gap-2">

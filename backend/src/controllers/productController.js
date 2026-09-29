@@ -381,6 +381,79 @@ async function getFeaturedProducts(req, res) {
   return getProducts(req, res, { ...req.query, featured: '1' });
 }
 
+async function getFeaturedHighlight(req, res) {
+  try {
+    let product = await Product.findOne({ is_featured_highlight: 1, is_active: 1 });
+
+    if (!product) {
+      product = await Product.findOne({ is_featured: 1, is_active: 1 });
+    }
+
+    if (!product) {
+      product = await Product.findOne({ is_active: 1 });
+    }
+
+    if (!product) {
+      return res.status(404).json({ success: false, message: 'No product found' });
+    }
+
+    const data = productWithImages(product);
+    if (product.category_id) {
+      const category = await Category.findById(product.category_id).select('name');
+      data.category_name = category?.name || null;
+    }
+
+    return res.status(200).json({ success: true, data });
+  } catch (error) {
+    console.error('getFeaturedHighlight error:', error);
+    return res.status(500).json({ success: false, message: 'Failed to fetch featured highlight.' });
+  }
+}
+
+async function toggleFeaturedHighlight(req, res) {
+  const { id } = req.params;
+  if (!mongoose.isValidObjectId(id)) {
+    return res.status(404).json({ success: false, message: 'Invalid product ID' });
+  }
+
+  try {
+    const targetProduct = await Product.findById(id);
+    if (!targetProduct) {
+      return res.status(404).json({ success: false, message: 'Product not found' });
+    }
+
+    const isCurrentlyHighlight = targetProduct.is_featured_highlight === 1;
+
+    if (isCurrentlyHighlight) {
+      targetProduct.is_featured_highlight = 0;
+      await targetProduct.save();
+      return res.status(200).json({
+        success: true,
+        message: `"${targetProduct.name}" is no longer Featured Highlight.`,
+        is_featured_highlight: 0,
+        productId: targetProduct.id
+      });
+    } else {
+      // STRICT 1 PRODUCT LIMIT: Reset all other products to 0
+      await Product.updateMany({}, { is_featured_highlight: 0 });
+
+      targetProduct.is_featured_highlight = 1;
+      targetProduct.is_featured = 1;
+      await targetProduct.save();
+
+      return res.status(200).json({
+        success: true,
+        message: `"${targetProduct.name}" set as Homepage Featured Highlight!`,
+        is_featured_highlight: 1,
+        productId: targetProduct.id
+      });
+    }
+  } catch (error) {
+    console.error('toggleFeaturedHighlight error:', error);
+    return res.status(500).json({ success: false, message: 'Failed to update featured highlight.' });
+  }
+}
+
 async function getNewArrivals(req, res) {
   return getProducts(req, res, { ...req.query, newArrival: '1' });
 }
@@ -416,7 +489,7 @@ async function createProduct(req, res) {
   const {
     name, sku, brand = 'Ahmed Moblie', category_id, price, old_price,
     discount_percentage = 0, stock_quantity = 0, short_description = '', description = '',
-    is_featured = 0, is_new_arrival = 0, is_best_seller = 0
+    is_featured = 0, is_featured_highlight = 0, is_new_arrival = 0, is_best_seller = 0
   } = req.body;
 
   if (!name || !String(name).trim()) return res.status(400).json({ success: false, message: 'Product name is required.' });
@@ -427,6 +500,9 @@ async function createProduct(req, res) {
   try {
     if (await Product.exists({ sku: String(sku).trim() })) return res.status(400).json({ success: false, message: 'SKU already exists.' });
     const category = category_id && mongoose.isValidObjectId(category_id) ? await Category.findById(category_id).select('_id') : null;
+    if (isEnabled(is_featured_highlight)) {
+      await Product.updateMany({}, { is_featured_highlight: 0 });
+    }
     const product = await Product.create({
       name: String(name).trim(),
       slug: slugify(name),
@@ -439,7 +515,8 @@ async function createProduct(req, res) {
       sku: String(sku).trim(),
       brand,
       category_id: category?._id || null,
-      is_featured: isEnabled(is_featured) ? 1 : 0,
+      is_featured: isEnabled(is_featured) || isEnabled(is_featured_highlight) ? 1 : 0,
+      is_featured_highlight: isEnabled(is_featured_highlight) ? 1 : 0,
       is_new_arrival: isEnabled(is_new_arrival) ? 1 : 0,
       is_best_seller: isEnabled(is_best_seller) ? 1 : 0,
       is_active: 1,
@@ -459,7 +536,7 @@ async function updateProduct(req, res) {
     const product = await Product.findById(id);
     if (!product) return res.status(404).json({ success: false, message: 'Product not found' });
     const { name, sku, brand = 'Ahmed Moblie', category_id, price, old_price, discount_percentage, stock_quantity,
-      short_description, description, is_featured, is_new_arrival, is_best_seller } = req.body;
+      short_description, description, is_featured, is_featured_highlight, is_new_arrival, is_best_seller } = req.body;
 
     if (sku && await Product.exists({ sku: String(sku).trim(), _id: { $ne: id } })) {
       return res.status(400).json({ success: false, message: 'SKU already exists.' });
@@ -480,6 +557,15 @@ async function updateProduct(req, res) {
     if (short_description !== undefined) product.short_description = short_description;
     if (description !== undefined) product.description = description;
     if (is_featured !== undefined) product.is_featured = isEnabled(is_featured) ? 1 : 0;
+    if (is_featured_highlight !== undefined) {
+      if (isEnabled(is_featured_highlight)) {
+        await Product.updateMany({ _id: { $ne: id } }, { is_featured_highlight: 0 });
+        product.is_featured_highlight = 1;
+        product.is_featured = 1;
+      } else {
+        product.is_featured_highlight = 0;
+      }
+    }
     if (is_new_arrival !== undefined) product.is_new_arrival = isEnabled(is_new_arrival) ? 1 : 0;
     if (is_best_seller !== undefined) product.is_best_seller = isEnabled(is_best_seller) ? 1 : 0;
     if (req.files?.length) product.images.push(...uploadedImages(req.files, product.images.some((image) => image.is_primary === 1)));
@@ -569,6 +655,8 @@ async function updateProductDeal(req, res) {
 module.exports = {
   getProducts,
   getFeaturedProducts,
+  getFeaturedHighlight,
+  toggleFeaturedHighlight,
   getNewArrivals,
   getBestSellers,
   getProductsByCategory,
